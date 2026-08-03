@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: hr-dash
+  namespace: hr-dashboard
+
+spec:
+  replicas: 3
+
+  strategy:
+    type: RollingUpdate
+
+  selector:
+    matchLabels:
+      app: hr-dashboard
+
+  template:
+    metadata:
+      labels:
+        app: hr-dashboard
+
+    spec:
+      priorityClassName: hr-dashboard-priority
+
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+
+      containers:
+
+      - name: hr-dashboard
+        image: hr-dash:latest
+        imagePullPolicy: Never
+
+        ports:
+        - containerPort: 8501
+
+        envFrom:
+        - configMapRef:
+            name: hr-dash-config
+
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+
+        volumeMounts:
+        - name: dashboard-storage
+          mountPath: /app/src/input_data
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8501
+          initialDelaySeconds: 20
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8501
+          initialDelaySeconds: 10
+
+      volumes:
+      - name: dashboard-storage
+        persistentVolumeClaim:
+          claimName: hr-dashboard-pvc

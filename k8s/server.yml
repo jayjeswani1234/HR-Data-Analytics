@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: hr-dashboard-service
+  namespace: hr-dashboard
+
+spec:
+  selector:
+    app: hr-dashboard
+
+  ports:
+  - port: 80
+    targetPort: 8501
+
+  type: ClusterIP
